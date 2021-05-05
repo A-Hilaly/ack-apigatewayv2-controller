@@ -19,9 +19,9 @@ import (
 	"context"
 	"strings"
 
-	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
-	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
-	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
+	ackv1alpha1 "github.com/aws-controllers-k8s/runtime/apis/core/v1alpha1"
+	ackcompare "github.com/aws-controllers-k8s/runtime/pkg/compare"
+	ackerr "github.com/aws-controllers-k8s/runtime/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/apigatewayv2"
 	corev1 "k8s.io/api/core/v1"
@@ -73,9 +73,13 @@ func (rm *resourceManager) sdkFind(
 
 	if resp.ApiGatewayManaged != nil {
 		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
+	} else {
+		ko.Status.APIGatewayManaged = nil
 	}
 	if resp.ApiKeyRequired != nil {
 		ko.Spec.APIKeyRequired = resp.ApiKeyRequired
+	} else {
+		ko.Spec.APIKeyRequired = nil
 	}
 	if resp.AuthorizationScopes != nil {
 		f2 := []*string{}
@@ -85,18 +89,28 @@ func (rm *resourceManager) sdkFind(
 			f2 = append(f2, &f2elem)
 		}
 		ko.Spec.AuthorizationScopes = f2
+	} else {
+		ko.Spec.AuthorizationScopes = nil
 	}
 	if resp.AuthorizationType != nil {
 		ko.Spec.AuthorizationType = resp.AuthorizationType
+	} else {
+		ko.Spec.AuthorizationType = nil
 	}
 	if resp.AuthorizerId != nil {
 		ko.Spec.AuthorizerID = resp.AuthorizerId
+	} else {
+		ko.Spec.AuthorizerID = nil
 	}
 	if resp.ModelSelectionExpression != nil {
 		ko.Spec.ModelSelectionExpression = resp.ModelSelectionExpression
+	} else {
+		ko.Spec.ModelSelectionExpression = nil
 	}
 	if resp.OperationName != nil {
 		ko.Spec.OperationName = resp.OperationName
+	} else {
+		ko.Spec.OperationName = nil
 	}
 	if resp.RequestModels != nil {
 		f7 := map[string]*string{}
@@ -106,6 +120,8 @@ func (rm *resourceManager) sdkFind(
 			f7[f7key] = &f7val
 		}
 		ko.Spec.RequestModels = f7
+	} else {
+		ko.Spec.RequestModels = nil
 	}
 	if resp.RequestParameters != nil {
 		f8 := map[string]*svcapitypes.ParameterConstraints{}
@@ -117,21 +133,32 @@ func (rm *resourceManager) sdkFind(
 			f8[f8key] = f8val
 		}
 		ko.Spec.RequestParameters = f8
+	} else {
+		ko.Spec.RequestParameters = nil
 	}
 	if resp.RouteId != nil {
 		ko.Status.RouteID = resp.RouteId
+	} else {
+		ko.Status.RouteID = nil
 	}
 	if resp.RouteKey != nil {
 		ko.Spec.RouteKey = resp.RouteKey
+	} else {
+		ko.Spec.RouteKey = nil
 	}
 	if resp.RouteResponseSelectionExpression != nil {
 		ko.Spec.RouteResponseSelectionExpression = resp.RouteResponseSelectionExpression
+	} else {
+		ko.Spec.RouteResponseSelectionExpression = nil
 	}
 	if resp.Target != nil {
 		ko.Spec.Target = resp.Target
+	} else {
+		ko.Spec.Target = nil
 	}
 
 	rm.setStatusDefaults(ko)
+
 	return &resource{ko}, nil
 }
 
@@ -168,7 +195,7 @@ func (rm *resourceManager) sdkCreate(
 	ctx context.Context,
 	r *resource,
 ) (*resource, error) {
-	input, err := rm.newCreateRequestPayload(r)
+	input, err := rm.newCreateRequestPayload(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -184,9 +211,13 @@ func (rm *resourceManager) sdkCreate(
 
 	if resp.ApiGatewayManaged != nil {
 		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
+	} else {
+		ko.Status.APIGatewayManaged = nil
 	}
 	if resp.RouteId != nil {
 		ko.Status.RouteID = resp.RouteId
+	} else {
+		ko.Status.RouteID = nil
 	}
 
 	rm.setStatusDefaults(ko)
@@ -197,6 +228,7 @@ func (rm *resourceManager) sdkCreate(
 // newCreateRequestPayload returns an SDK-specific struct for the HTTP request
 // payload of the Create API call for the resource
 func (rm *resourceManager) newCreateRequestPayload(
+	ctx context.Context,
 	r *resource,
 ) (*svcsdk.CreateRouteInput, error) {
 	res := &svcsdk.CreateRouteInput{}
@@ -267,10 +299,10 @@ func (rm *resourceManager) sdkUpdate(
 	ctx context.Context,
 	desired *resource,
 	latest *resource,
-	diffReporter *ackcompare.Reporter,
+	delta *ackcompare.Delta,
 ) (*resource, error) {
 
-	input, err := rm.newUpdateRequestPayload(desired)
+	input, err := rm.newUpdateRequestPayload(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -286,9 +318,13 @@ func (rm *resourceManager) sdkUpdate(
 
 	if resp.ApiGatewayManaged != nil {
 		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
+	} else {
+		ko.Status.APIGatewayManaged = nil
 	}
 	if resp.RouteId != nil {
 		ko.Status.RouteID = resp.RouteId
+	} else {
+		ko.Status.RouteID = nil
 	}
 
 	rm.setStatusDefaults(ko)
@@ -299,6 +335,7 @@ func (rm *resourceManager) sdkUpdate(
 // newUpdateRequestPayload returns an SDK-specific struct for the HTTP request
 // payload of the Update API call for the resource
 func (rm *resourceManager) newUpdateRequestPayload(
+	ctx context.Context,
 	r *resource,
 ) (*svcsdk.UpdateRouteInput, error) {
 	res := &svcsdk.UpdateRouteInput{}
@@ -371,6 +408,7 @@ func (rm *resourceManager) sdkDelete(
 	ctx context.Context,
 	r *resource,
 ) error {
+
 	input, err := rm.newDeleteRequestPayload(r)
 	if err != nil {
 		return err
@@ -423,10 +461,13 @@ func (rm *resourceManager) updateConditions(
 
 	// Terminal condition
 	var terminalCondition *ackv1alpha1.Condition = nil
+	var recoverableCondition *ackv1alpha1.Condition = nil
 	for _, condition := range ko.Status.Conditions {
 		if condition.Type == ackv1alpha1.ConditionTypeTerminal {
 			terminalCondition = condition
-			break
+		}
+		if condition.Type == ackv1alpha1.ConditionTypeRecoverable {
+			recoverableCondition = condition
 		}
 	}
 
@@ -441,11 +482,34 @@ func (rm *resourceManager) updateConditions(
 		awsErr, _ := ackerr.AWSError(err)
 		errorMessage := awsErr.Message()
 		terminalCondition.Message = &errorMessage
-	} else if terminalCondition != nil {
-		terminalCondition.Status = corev1.ConditionFalse
-		terminalCondition.Message = nil
+	} else {
+		// Clear the terminal condition if no longer present
+		if terminalCondition != nil {
+			terminalCondition.Status = corev1.ConditionFalse
+			terminalCondition.Message = nil
+		}
+		// Handling Recoverable Conditions
+		if err != nil {
+			if recoverableCondition == nil {
+				// Add a new Condition containing a non-terminal error
+				recoverableCondition = &ackv1alpha1.Condition{
+					Type: ackv1alpha1.ConditionTypeRecoverable,
+				}
+				ko.Status.Conditions = append(ko.Status.Conditions, recoverableCondition)
+			}
+			recoverableCondition.Status = corev1.ConditionTrue
+			awsErr, _ := ackerr.AWSError(err)
+			errorMessage := err.Error()
+			if awsErr != nil {
+				errorMessage = awsErr.Message()
+			}
+			recoverableCondition.Message = &errorMessage
+		} else if recoverableCondition != nil {
+			recoverableCondition.Status = corev1.ConditionFalse
+			recoverableCondition.Message = nil
+		}
 	}
-	if terminalCondition != nil {
+	if terminalCondition != nil || recoverableCondition != nil {
 		return &resource{ko}, true // updated
 	}
 	return nil, false // not updated

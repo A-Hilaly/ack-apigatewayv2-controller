@@ -68,6 +68,7 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              responseParameters: {}
               templateSelectionExpression:
                 type: string
               timeoutInMillis:

@@ -45,12 +45,12 @@ const (
 	ContentHandlingStrategy_CONVERT_TO_TEXT   ContentHandlingStrategy = "CONVERT_TO_TEXT"
 )
 
-type DeploymentStatus_SDK string
+type DeploymentStatus string
 
 const (
-	DeploymentStatus_SDK_PENDING  DeploymentStatus_SDK = "PENDING"
-	DeploymentStatus_SDK_FAILED   DeploymentStatus_SDK = "FAILED"
-	DeploymentStatus_SDK_DEPLOYED DeploymentStatus_SDK = "DEPLOYED"
+	DeploymentStatus_PENDING  DeploymentStatus = "PENDING"
+	DeploymentStatus_FAILED   DeploymentStatus = "FAILED"
+	DeploymentStatus_DEPLOYED DeploymentStatus = "DEPLOYED"
 )
 
 type DomainNameStatus_SDK string
@@ -107,14 +107,14 @@ const (
 	SecurityPolicy_TLS_1_2 SecurityPolicy = "TLS_1_2"
 )
 
-type VPCLinkStatus_SDK string
+type VPCLinkStatus string
 
 const (
-	VPCLinkStatus_SDK_PENDING   VPCLinkStatus_SDK = "PENDING"
-	VPCLinkStatus_SDK_AVAILABLE VPCLinkStatus_SDK = "AVAILABLE"
-	VPCLinkStatus_SDK_DELETING  VPCLinkStatus_SDK = "DELETING"
-	VPCLinkStatus_SDK_FAILED    VPCLinkStatus_SDK = "FAILED"
-	VPCLinkStatus_SDK_INACTIVE  VPCLinkStatus_SDK = "INACTIVE"
+	VPCLinkStatus_PENDING   VPCLinkStatus = "PENDING"
+	VPCLinkStatus_AVAILABLE VPCLinkStatus = "AVAILABLE"
+	VPCLinkStatus_DELETING  VPCLinkStatus = "DELETING"
+	VPCLinkStatus_FAILED    VPCLinkStatus = "FAILED"
+	VPCLinkStatus_INACTIVE  VPCLinkStatus = "INACTIVE"
 )
 
 type VPCLinkVersion string

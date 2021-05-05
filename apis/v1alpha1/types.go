@@ -16,33 +16,40 @@
 package v1alpha1
 
 import (
+	ackv1alpha1 "github.com/aws-controllers-k8s/runtime/apis/core/v1alpha1"
+	"github.com/aws/aws-sdk-go/aws"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type APIMapping_SDK struct {
-	APIID         *string `json:"apiID,omitempty"`
-	APIMappingID  *string `json:"apiMappingID,omitempty"`
-	APIMappingKey *string `json:"apiMappingKey,omitempty"`
-	Stage         *string `json:"stage,omitempty"`
-}
+// Hack to avoid import errors during build...
+var (
+	_ = &metav1.Time{}
+	_ = &aws.JSONValue{}
+	_ = ackv1alpha1.AWSAccountID("")
+)
 
-type API_SDK struct {
+type API struct {
 	APIEndpoint               *string            `json:"apiEndpoint,omitempty"`
 	APIGatewayManaged         *bool              `json:"apiGatewayManaged,omitempty"`
 	APIID                     *string            `json:"apiID,omitempty"`
 	APIKeySelectionExpression *string            `json:"apiKeySelectionExpression,omitempty"`
-	CorsConfiguration         *Cors              `json:"corsConfiguration,omitempty"`
 	CreatedDate               *metav1.Time       `json:"createdDate,omitempty"`
 	Description               *string            `json:"description,omitempty"`
 	DisableExecuteAPIEndpoint *bool              `json:"disableExecuteAPIEndpoint,omitempty"`
 	DisableSchemaValidation   *bool              `json:"disableSchemaValidation,omitempty"`
 	ImportInfo                []*string          `json:"importInfo,omitempty"`
 	Name                      *string            `json:"name,omitempty"`
-	ProtocolType              *string            `json:"protocolType,omitempty"`
 	RouteSelectionExpression  *string            `json:"routeSelectionExpression,omitempty"`
 	Tags                      map[string]*string `json:"tags,omitempty"`
 	Version                   *string            `json:"version,omitempty"`
 	Warnings                  []*string          `json:"warnings,omitempty"`
+}
+
+type APIMapping struct {
+	APIID         *string `json:"apiID,omitempty"`
+	APIMappingID  *string `json:"apiMappingID,omitempty"`
+	APIMappingKey *string `json:"apiMappingKey,omitempty"`
+	Stage         *string `json:"stage,omitempty"`
 }
 
 type AccessLogSettings struct {
@@ -50,34 +57,24 @@ type AccessLogSettings struct {
 	Format         *string `json:"format,omitempty"`
 }
 
-type Authorizer_SDK struct {
-	AuthorizerCredentialsARN       *string           `json:"authorizerCredentialsARN,omitempty"`
-	AuthorizerID                   *string           `json:"authorizerID,omitempty"`
-	AuthorizerPayloadFormatVersion *string           `json:"authorizerPayloadFormatVersion,omitempty"`
-	AuthorizerResultTtlInSeconds   *int64            `json:"authorizerResultTtlInSeconds,omitempty"`
-	AuthorizerType                 *string           `json:"authorizerType,omitempty"`
-	AuthorizerURI                  *string           `json:"authorizerURI,omitempty"`
-	EnableSimpleResponses          *bool             `json:"enableSimpleResponses,omitempty"`
-	IDentitySource                 []*string         `json:"identitySource,omitempty"`
-	IDentityValidationExpression   *string           `json:"identityValidationExpression,omitempty"`
-	JWTConfiguration               *JWTConfiguration `json:"jwtConfiguration,omitempty"`
-	Name                           *string           `json:"name,omitempty"`
+type Authorizer struct {
+	AuthorizerCredentialsARN       *string `json:"authorizerCredentialsARN,omitempty"`
+	AuthorizerID                   *string `json:"authorizerID,omitempty"`
+	AuthorizerPayloadFormatVersion *string `json:"authorizerPayloadFormatVersion,omitempty"`
+	AuthorizerURI                  *string `json:"authorizerURI,omitempty"`
+	EnableSimpleResponses          *bool   `json:"enableSimpleResponses,omitempty"`
+	IDentityValidationExpression   *string `json:"identityValidationExpression,omitempty"`
+	Name                           *string `json:"name,omitempty"`
 }
 
 type Cors struct {
-	AllowCredentials *bool     `json:"allowCredentials,omitempty"`
-	AllowHeaders     []*string `json:"allowHeaders,omitempty"`
-	AllowMethods     []*string `json:"allowMethods,omitempty"`
-	AllowOrigins     []*string `json:"allowOrigins,omitempty"`
-	ExposeHeaders    []*string `json:"exposeHeaders,omitempty"`
-	MaxAge           *int64    `json:"maxAge,omitempty"`
+	AllowCredentials *bool `json:"allowCredentials,omitempty"`
 }
 
-type Deployment_SDK struct {
+type Deployment struct {
 	AutoDeployed            *bool        `json:"autoDeployed,omitempty"`
 	CreatedDate             *metav1.Time `json:"createdDate,omitempty"`
 	DeploymentID            *string      `json:"deploymentID,omitempty"`
-	DeploymentStatus        *string      `json:"deploymentStatus,omitempty"`
 	DeploymentStatusMessage *string      `json:"deploymentStatusMessage,omitempty"`
 	Description             *string      `json:"description,omitempty"`
 }
@@ -102,35 +99,24 @@ type DomainName_SDK struct {
 	Tags                          map[string]*string         `json:"tags,omitempty"`
 }
 
-type IntegrationResponse_SDK struct {
-	ContentHandlingStrategy     *string            `json:"contentHandlingStrategy,omitempty"`
-	IntegrationResponseID       *string            `json:"integrationResponseID,omitempty"`
-	IntegrationResponseKey      *string            `json:"integrationResponseKey,omitempty"`
-	ResponseParameters          map[string]*string `json:"responseParameters,omitempty"`
-	ResponseTemplates           map[string]*string `json:"responseTemplates,omitempty"`
-	TemplateSelectionExpression *string            `json:"templateSelectionExpression,omitempty"`
+type Integration struct {
+	APIGatewayManaged                      *bool   `json:"apiGatewayManaged,omitempty"`
+	ConnectionID                           *string `json:"connectionID,omitempty"`
+	CredentialsARN                         *string `json:"credentialsARN,omitempty"`
+	Description                            *string `json:"description,omitempty"`
+	IntegrationID                          *string `json:"integrationID,omitempty"`
+	IntegrationMethod                      *string `json:"integrationMethod,omitempty"`
+	IntegrationResponseSelectionExpression *string `json:"integrationResponseSelectionExpression,omitempty"`
+	IntegrationSubtype                     *string `json:"integrationSubtype,omitempty"`
+	IntegrationURI                         *string `json:"integrationURI,omitempty"`
+	PayloadFormatVersion                   *string `json:"payloadFormatVersion,omitempty"`
+	TemplateSelectionExpression            *string `json:"templateSelectionExpression,omitempty"`
 }
 
-type Integration_SDK struct {
-	APIGatewayManaged                      *bool              `json:"apiGatewayManaged,omitempty"`
-	ConnectionID                           *string            `json:"connectionID,omitempty"`
-	ConnectionType                         *string            `json:"connectionType,omitempty"`
-	ContentHandlingStrategy                *string            `json:"contentHandlingStrategy,omitempty"`
-	CredentialsARN                         *string            `json:"credentialsARN,omitempty"`
-	Description                            *string            `json:"description,omitempty"`
-	IntegrationID                          *string            `json:"integrationID,omitempty"`
-	IntegrationMethod                      *string            `json:"integrationMethod,omitempty"`
-	IntegrationResponseSelectionExpression *string            `json:"integrationResponseSelectionExpression,omitempty"`
-	IntegrationSubtype                     *string            `json:"integrationSubtype,omitempty"`
-	IntegrationType                        *string            `json:"integrationType,omitempty"`
-	IntegrationURI                         *string            `json:"integrationURI,omitempty"`
-	PassthroughBehavior                    *string            `json:"passthroughBehavior,omitempty"`
-	PayloadFormatVersion                   *string            `json:"payloadFormatVersion,omitempty"`
-	RequestParameters                      map[string]*string `json:"requestParameters,omitempty"`
-	RequestTemplates                       map[string]*string `json:"requestTemplates,omitempty"`
-	TemplateSelectionExpression            *string            `json:"templateSelectionExpression,omitempty"`
-	TimeoutInMillis                        *int64             `json:"timeoutInMillis,omitempty"`
-	TLSConfig                              *TLSConfig         `json:"tlsConfig,omitempty"`
+type IntegrationResponse struct {
+	IntegrationResponseID       *string `json:"integrationResponseID,omitempty"`
+	IntegrationResponseKey      *string `json:"integrationResponseKey,omitempty"`
+	TemplateSelectionExpression *string `json:"templateSelectionExpression,omitempty"`
 }
 
 type JWTConfiguration struct {
@@ -138,12 +124,10 @@ type JWTConfiguration struct {
 	Issuer   *string   `json:"issuer,omitempty"`
 }
 
-type Model_SDK struct {
-	ContentType *string `json:"contentType,omitempty"`
+type Model struct {
 	Description *string `json:"description,omitempty"`
 	ModelID     *string `json:"modelID,omitempty"`
 	Name        *string `json:"name,omitempty"`
-	Schema      *string `json:"schema,omitempty"`
 }
 
 type MutualTLSAuthentication struct {
@@ -218,14 +202,10 @@ type TLSConfigInput struct {
 	ServerNameToVerify *string `json:"serverNameToVerify,omitempty"`
 }
 
-type VPCLink_SDK struct {
+type VPCLink struct {
 	CreatedDate          *metav1.Time       `json:"createdDate,omitempty"`
 	Name                 *string            `json:"name,omitempty"`
-	SecurityGroupIDs     []*string          `json:"securityGroupIDs,omitempty"`
-	SubnetIDs            []*string          `json:"subnetIDs,omitempty"`
 	Tags                 map[string]*string `json:"tags,omitempty"`
 	VPCLinkID            *string            `json:"vpcLinkID,omitempty"`
-	VPCLinkStatus        *string            `json:"vpcLinkStatus,omitempty"`
 	VPCLinkStatusMessage *string            `json:"vpcLinkStatusMessage,omitempty"`
-	VPCLinkVersion       *string            `json:"vpcLinkVersion,omitempty"`
 }

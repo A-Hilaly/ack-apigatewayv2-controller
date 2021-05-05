@@ -19,9 +19,9 @@ import (
 	"context"
 	"strings"
 
-	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
-	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
-	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
+	ackv1alpha1 "github.com/aws-controllers-k8s/runtime/apis/core/v1alpha1"
+	ackcompare "github.com/aws-controllers-k8s/runtime/pkg/compare"
+	ackerr "github.com/aws-controllers-k8s/runtime/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/apigatewayv2"
 	corev1 "k8s.io/api/core/v1"
@@ -80,18 +80,28 @@ func (rm *resourceManager) sdkFind(
 			f0.Format = resp.AccessLogSettings.Format
 		}
 		ko.Spec.AccessLogSettings = f0
+	} else {
+		ko.Spec.AccessLogSettings = nil
 	}
 	if resp.ApiGatewayManaged != nil {
 		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
+	} else {
+		ko.Status.APIGatewayManaged = nil
 	}
 	if resp.AutoDeploy != nil {
 		ko.Spec.AutoDeploy = resp.AutoDeploy
+	} else {
+		ko.Spec.AutoDeploy = nil
 	}
 	if resp.ClientCertificateId != nil {
 		ko.Spec.ClientCertificateID = resp.ClientCertificateId
+	} else {
+		ko.Spec.ClientCertificateID = nil
 	}
 	if resp.CreatedDate != nil {
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
+	} else {
+		ko.Status.CreatedDate = nil
 	}
 	if resp.DefaultRouteSettings != nil {
 		f5 := &svcapitypes.RouteSettings{}
@@ -111,18 +121,28 @@ func (rm *resourceManager) sdkFind(
 			f5.ThrottlingRateLimit = resp.DefaultRouteSettings.ThrottlingRateLimit
 		}
 		ko.Spec.DefaultRouteSettings = f5
+	} else {
+		ko.Spec.DefaultRouteSettings = nil
 	}
 	if resp.DeploymentId != nil {
 		ko.Spec.DeploymentID = resp.DeploymentId
+	} else {
+		ko.Spec.DeploymentID = nil
 	}
 	if resp.Description != nil {
 		ko.Spec.Description = resp.Description
+	} else {
+		ko.Spec.Description = nil
 	}
 	if resp.LastDeploymentStatusMessage != nil {
 		ko.Status.LastDeploymentStatusMessage = resp.LastDeploymentStatusMessage
+	} else {
+		ko.Status.LastDeploymentStatusMessage = nil
 	}
 	if resp.LastUpdatedDate != nil {
 		ko.Status.LastUpdatedDate = &metav1.Time{*resp.LastUpdatedDate}
+	} else {
+		ko.Status.LastUpdatedDate = nil
 	}
 	if resp.RouteSettings != nil {
 		f10 := map[string]*svcapitypes.RouteSettings{}
@@ -146,9 +166,13 @@ func (rm *resourceManager) sdkFind(
 			f10[f10key] = f10val
 		}
 		ko.Spec.RouteSettings = f10
+	} else {
+		ko.Spec.RouteSettings = nil
 	}
 	if resp.StageName != nil {
 		ko.Spec.StageName = resp.StageName
+	} else {
+		ko.Spec.StageName = nil
 	}
 	if resp.StageVariables != nil {
 		f12 := map[string]*string{}
@@ -158,6 +182,8 @@ func (rm *resourceManager) sdkFind(
 			f12[f12key] = &f12val
 		}
 		ko.Spec.StageVariables = f12
+	} else {
+		ko.Spec.StageVariables = nil
 	}
 	if resp.Tags != nil {
 		f13 := map[string]*string{}
@@ -167,9 +193,12 @@ func (rm *resourceManager) sdkFind(
 			f13[f13key] = &f13val
 		}
 		ko.Spec.Tags = f13
+	} else {
+		ko.Spec.Tags = nil
 	}
 
 	rm.setStatusDefaults(ko)
+
 	return &resource{ko}, nil
 }
 
@@ -206,7 +235,7 @@ func (rm *resourceManager) sdkCreate(
 	ctx context.Context,
 	r *resource,
 ) (*resource, error) {
-	input, err := rm.newCreateRequestPayload(r)
+	input, err := rm.newCreateRequestPayload(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -222,15 +251,23 @@ func (rm *resourceManager) sdkCreate(
 
 	if resp.ApiGatewayManaged != nil {
 		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
+	} else {
+		ko.Status.APIGatewayManaged = nil
 	}
 	if resp.CreatedDate != nil {
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
+	} else {
+		ko.Status.CreatedDate = nil
 	}
 	if resp.LastDeploymentStatusMessage != nil {
 		ko.Status.LastDeploymentStatusMessage = resp.LastDeploymentStatusMessage
+	} else {
+		ko.Status.LastDeploymentStatusMessage = nil
 	}
 	if resp.LastUpdatedDate != nil {
 		ko.Status.LastUpdatedDate = &metav1.Time{*resp.LastUpdatedDate}
+	} else {
+		ko.Status.LastUpdatedDate = nil
 	}
 
 	rm.setStatusDefaults(ko)
@@ -241,6 +278,7 @@ func (rm *resourceManager) sdkCreate(
 // newCreateRequestPayload returns an SDK-specific struct for the HTTP request
 // payload of the Create API call for the resource
 func (rm *resourceManager) newCreateRequestPayload(
+	ctx context.Context,
 	r *resource,
 ) (*svcsdk.CreateStageInput, error) {
 	res := &svcsdk.CreateStageInput{}
@@ -343,10 +381,10 @@ func (rm *resourceManager) sdkUpdate(
 	ctx context.Context,
 	desired *resource,
 	latest *resource,
-	diffReporter *ackcompare.Reporter,
+	delta *ackcompare.Delta,
 ) (*resource, error) {
 
-	input, err := rm.newUpdateRequestPayload(desired)
+	input, err := rm.newUpdateRequestPayload(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -362,15 +400,23 @@ func (rm *resourceManager) sdkUpdate(
 
 	if resp.ApiGatewayManaged != nil {
 		ko.Status.APIGatewayManaged = resp.ApiGatewayManaged
+	} else {
+		ko.Status.APIGatewayManaged = nil
 	}
 	if resp.CreatedDate != nil {
 		ko.Status.CreatedDate = &metav1.Time{*resp.CreatedDate}
+	} else {
+		ko.Status.CreatedDate = nil
 	}
 	if resp.LastDeploymentStatusMessage != nil {
 		ko.Status.LastDeploymentStatusMessage = resp.LastDeploymentStatusMessage
+	} else {
+		ko.Status.LastDeploymentStatusMessage = nil
 	}
 	if resp.LastUpdatedDate != nil {
 		ko.Status.LastUpdatedDate = &metav1.Time{*resp.LastUpdatedDate}
+	} else {
+		ko.Status.LastUpdatedDate = nil
 	}
 
 	rm.setStatusDefaults(ko)
@@ -381,6 +427,7 @@ func (rm *resourceManager) sdkUpdate(
 // newUpdateRequestPayload returns an SDK-specific struct for the HTTP request
 // payload of the Update API call for the resource
 func (rm *resourceManager) newUpdateRequestPayload(
+	ctx context.Context,
 	r *resource,
 ) (*svcsdk.UpdateStageInput, error) {
 	res := &svcsdk.UpdateStageInput{}
@@ -473,6 +520,7 @@ func (rm *resourceManager) sdkDelete(
 	ctx context.Context,
 	r *resource,
 ) error {
+
 	input, err := rm.newDeleteRequestPayload(r)
 	if err != nil {
 		return err
@@ -525,10 +573,13 @@ func (rm *resourceManager) updateConditions(
 
 	// Terminal condition
 	var terminalCondition *ackv1alpha1.Condition = nil
+	var recoverableCondition *ackv1alpha1.Condition = nil
 	for _, condition := range ko.Status.Conditions {
 		if condition.Type == ackv1alpha1.ConditionTypeTerminal {
 			terminalCondition = condition
-			break
+		}
+		if condition.Type == ackv1alpha1.ConditionTypeRecoverable {
+			recoverableCondition = condition
 		}
 	}
 
@@ -543,11 +594,34 @@ func (rm *resourceManager) updateConditions(
 		awsErr, _ := ackerr.AWSError(err)
 		errorMessage := awsErr.Message()
 		terminalCondition.Message = &errorMessage
-	} else if terminalCondition != nil {
-		terminalCondition.Status = corev1.ConditionFalse
-		terminalCondition.Message = nil
+	} else {
+		// Clear the terminal condition if no longer present
+		if terminalCondition != nil {
+			terminalCondition.Status = corev1.ConditionFalse
+			terminalCondition.Message = nil
+		}
+		// Handling Recoverable Conditions
+		if err != nil {
+			if recoverableCondition == nil {
+				// Add a new Condition containing a non-terminal error
+				recoverableCondition = &ackv1alpha1.Condition{
+					Type: ackv1alpha1.ConditionTypeRecoverable,
+				}
+				ko.Status.Conditions = append(ko.Status.Conditions, recoverableCondition)
+			}
+			recoverableCondition.Status = corev1.ConditionTrue
+			awsErr, _ := ackerr.AWSError(err)
+			errorMessage := err.Error()
+			if awsErr != nil {
+				errorMessage = awsErr.Message()
+			}
+			recoverableCondition.Message = &errorMessage
+		} else if recoverableCondition != nil {
+			recoverableCondition.Status = corev1.ConditionFalse
+			recoverableCondition.Message = nil
+		}
 	}
-	if terminalCondition != nil {
+	if terminalCondition != nil || recoverableCondition != nil {
 		return &resource{ko}, true // updated
 	}
 	return nil, false // not updated

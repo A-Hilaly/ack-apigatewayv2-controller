@@ -19,9 +19,9 @@ import (
 	"context"
 	"strings"
 
-	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
-	ackcompare "github.com/aws/aws-controllers-k8s/pkg/compare"
-	ackerr "github.com/aws/aws-controllers-k8s/pkg/errors"
+	ackv1alpha1 "github.com/aws-controllers-k8s/runtime/apis/core/v1alpha1"
+	ackcompare "github.com/aws-controllers-k8s/runtime/pkg/compare"
+	ackerr "github.com/aws-controllers-k8s/runtime/pkg/errors"
 	"github.com/aws/aws-sdk-go/aws"
 	svcsdk "github.com/aws/aws-sdk-go/service/apigatewayv2"
 	corev1 "k8s.io/api/core/v1"
@@ -73,9 +73,13 @@ func (rm *resourceManager) sdkFind(
 
 	if resp.ApiMappingSelectionExpression != nil {
 		ko.Status.APIMappingSelectionExpression = resp.ApiMappingSelectionExpression
+	} else {
+		ko.Status.APIMappingSelectionExpression = nil
 	}
 	if resp.DomainName != nil {
 		ko.Spec.DomainName = resp.DomainName
+	} else {
+		ko.Spec.DomainName = nil
 	}
 	if resp.DomainNameConfigurations != nil {
 		f2 := []*svcapitypes.DomainNameConfiguration{}
@@ -111,6 +115,8 @@ func (rm *resourceManager) sdkFind(
 			f2 = append(f2, f2elem)
 		}
 		ko.Spec.DomainNameConfigurations = f2
+	} else {
+		ko.Spec.DomainNameConfigurations = nil
 	}
 	if resp.MutualTlsAuthentication != nil {
 		f3 := &svcapitypes.MutualTLSAuthenticationInput{}
@@ -121,6 +127,8 @@ func (rm *resourceManager) sdkFind(
 			f3.TruststoreVersion = resp.MutualTlsAuthentication.TruststoreVersion
 		}
 		ko.Spec.MutualTLSAuthentication = f3
+	} else {
+		ko.Spec.MutualTLSAuthentication = nil
 	}
 	if resp.Tags != nil {
 		f4 := map[string]*string{}
@@ -130,9 +138,12 @@ func (rm *resourceManager) sdkFind(
 			f4[f4key] = &f4val
 		}
 		ko.Spec.Tags = f4
+	} else {
+		ko.Spec.Tags = nil
 	}
 
 	rm.setStatusDefaults(ko)
+
 	return &resource{ko}, nil
 }
 
@@ -166,7 +177,7 @@ func (rm *resourceManager) sdkCreate(
 	ctx context.Context,
 	r *resource,
 ) (*resource, error) {
-	input, err := rm.newCreateRequestPayload(r)
+	input, err := rm.newCreateRequestPayload(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -182,6 +193,8 @@ func (rm *resourceManager) sdkCreate(
 
 	if resp.ApiMappingSelectionExpression != nil {
 		ko.Status.APIMappingSelectionExpression = resp.ApiMappingSelectionExpression
+	} else {
+		ko.Status.APIMappingSelectionExpression = nil
 	}
 
 	rm.setStatusDefaults(ko)
@@ -192,6 +205,7 @@ func (rm *resourceManager) sdkCreate(
 // newCreateRequestPayload returns an SDK-specific struct for the HTTP request
 // payload of the Create API call for the resource
 func (rm *resourceManager) newCreateRequestPayload(
+	ctx context.Context,
 	r *resource,
 ) (*svcsdk.CreateDomainNameInput, error) {
 	res := &svcsdk.CreateDomainNameInput{}
@@ -263,10 +277,10 @@ func (rm *resourceManager) sdkUpdate(
 	ctx context.Context,
 	desired *resource,
 	latest *resource,
-	diffReporter *ackcompare.Reporter,
+	delta *ackcompare.Delta,
 ) (*resource, error) {
 
-	input, err := rm.newUpdateRequestPayload(desired)
+	input, err := rm.newUpdateRequestPayload(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -282,6 +296,8 @@ func (rm *resourceManager) sdkUpdate(
 
 	if resp.ApiMappingSelectionExpression != nil {
 		ko.Status.APIMappingSelectionExpression = resp.ApiMappingSelectionExpression
+	} else {
+		ko.Status.APIMappingSelectionExpression = nil
 	}
 
 	rm.setStatusDefaults(ko)
@@ -292,6 +308,7 @@ func (rm *resourceManager) sdkUpdate(
 // newUpdateRequestPayload returns an SDK-specific struct for the HTTP request
 // payload of the Update API call for the resource
 func (rm *resourceManager) newUpdateRequestPayload(
+	ctx context.Context,
 	r *resource,
 ) (*svcsdk.UpdateDomainNameInput, error) {
 	res := &svcsdk.UpdateDomainNameInput{}
@@ -353,6 +370,7 @@ func (rm *resourceManager) sdkDelete(
 	ctx context.Context,
 	r *resource,
 ) error {
+
 	input, err := rm.newDeleteRequestPayload(r)
 	if err != nil {
 		return err
@@ -402,10 +420,13 @@ func (rm *resourceManager) updateConditions(
 
 	// Terminal condition
 	var terminalCondition *ackv1alpha1.Condition = nil
+	var recoverableCondition *ackv1alpha1.Condition = nil
 	for _, condition := range ko.Status.Conditions {
 		if condition.Type == ackv1alpha1.ConditionTypeTerminal {
 			terminalCondition = condition
-			break
+		}
+		if condition.Type == ackv1alpha1.ConditionTypeRecoverable {
+			recoverableCondition = condition
 		}
 	}
 
@@ -420,11 +441,34 @@ func (rm *resourceManager) updateConditions(
 		awsErr, _ := ackerr.AWSError(err)
 		errorMessage := awsErr.Message()
 		terminalCondition.Message = &errorMessage
-	} else if terminalCondition != nil {
-		terminalCondition.Status = corev1.ConditionFalse
-		terminalCondition.Message = nil
+	} else {
+		// Clear the terminal condition if no longer present
+		if terminalCondition != nil {
+			terminalCondition.Status = corev1.ConditionFalse
+			terminalCondition.Message = nil
+		}
+		// Handling Recoverable Conditions
+		if err != nil {
+			if recoverableCondition == nil {
+				// Add a new Condition containing a non-terminal error
+				recoverableCondition = &ackv1alpha1.Condition{
+					Type: ackv1alpha1.ConditionTypeRecoverable,
+				}
+				ko.Status.Conditions = append(ko.Status.Conditions, recoverableCondition)
+			}
+			recoverableCondition.Status = corev1.ConditionTrue
+			awsErr, _ := ackerr.AWSError(err)
+			errorMessage := err.Error()
+			if awsErr != nil {
+				errorMessage = awsErr.Message()
+			}
+			recoverableCondition.Message = &errorMessage
+		} else if recoverableCondition != nil {
+			recoverableCondition.Status = corev1.ConditionFalse
+			recoverableCondition.Message = nil
+		}
 	}
-	if terminalCondition != nil {
+	if terminalCondition != nil || recoverableCondition != nil {
 		return &resource{ko}, true // updated
 	}
 	return nil, false // not updated

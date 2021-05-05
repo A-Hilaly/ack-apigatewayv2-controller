@@ -16,25 +16,35 @@
 package v1alpha1
 
 import (
-	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	ackv1alpha1 "github.com/aws-controllers-k8s/runtime/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // StageSpec defines the desired state of Stage
 type StageSpec struct {
 	AccessLogSettings *AccessLogSettings `json:"accessLogSettings,omitempty"`
+
 	// +kubebuilder:validation:Required
-	APIID                *string                   `json:"apiID"`
-	AutoDeploy           *bool                     `json:"autoDeploy,omitempty"`
-	ClientCertificateID  *string                   `json:"clientCertificateID,omitempty"`
-	DefaultRouteSettings *RouteSettings            `json:"defaultRouteSettings,omitempty"`
-	DeploymentID         *string                   `json:"deploymentID,omitempty"`
-	Description          *string                   `json:"description,omitempty"`
-	RouteSettings        map[string]*RouteSettings `json:"routeSettings,omitempty"`
+	APIID *string `json:"apiID"`
+
+	AutoDeploy *bool `json:"autoDeploy,omitempty"`
+
+	ClientCertificateID *string `json:"clientCertificateID,omitempty"`
+
+	DefaultRouteSettings *RouteSettings `json:"defaultRouteSettings,omitempty"`
+
+	DeploymentID *string `json:"deploymentID,omitempty"`
+
+	Description *string `json:"description,omitempty"`
+
+	RouteSettings map[string]*RouteSettings `json:"routeSettings,omitempty"`
+
 	// +kubebuilder:validation:Required
-	StageName      *string            `json:"stageName"`
+	StageName *string `json:"stageName"`
+
 	StageVariables map[string]*string `json:"stageVariables,omitempty"`
-	Tags           map[string]*string `json:"tags,omitempty"`
+
+	Tags map[string]*string `json:"tags,omitempty"`
 }
 
 // StageStatus defines the observed state of Stage
@@ -47,11 +57,15 @@ type StageStatus struct {
 	// contains a collection of `ackv1alpha1.Condition` objects that describe
 	// the various terminal states of the CR and its backend AWS service API
 	// resource
-	Conditions                  []*ackv1alpha1.Condition `json:"conditions"`
-	APIGatewayManaged           *bool                    `json:"apiGatewayManaged,omitempty"`
-	CreatedDate                 *metav1.Time             `json:"createdDate,omitempty"`
-	LastDeploymentStatusMessage *string                  `json:"lastDeploymentStatusMessage,omitempty"`
-	LastUpdatedDate             *metav1.Time             `json:"lastUpdatedDate,omitempty"`
+	Conditions []*ackv1alpha1.Condition `json:"conditions"`
+
+	APIGatewayManaged *bool `json:"apiGatewayManaged,omitempty"`
+
+	CreatedDate *metav1.Time `json:"createdDate,omitempty"`
+
+	LastDeploymentStatusMessage *string `json:"lastDeploymentStatusMessage,omitempty"`
+
+	LastUpdatedDate *metav1.Time `json:"lastUpdatedDate,omitempty"`
 }
 
 // Stage is the Schema for the Stages API

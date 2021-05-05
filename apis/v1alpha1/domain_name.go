@@ -16,17 +16,21 @@
 package v1alpha1
 
 import (
-	ackv1alpha1 "github.com/aws/aws-controllers-k8s/apis/core/v1alpha1"
+	ackv1alpha1 "github.com/aws-controllers-k8s/runtime/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // DomainNameSpec defines the desired state of DomainName
 type DomainNameSpec struct {
+
 	// +kubebuilder:validation:Required
-	DomainName               *string                       `json:"domainName"`
-	DomainNameConfigurations []*DomainNameConfiguration    `json:"domainNameConfigurations,omitempty"`
-	MutualTLSAuthentication  *MutualTLSAuthenticationInput `json:"mutualTLSAuthentication,omitempty"`
-	Tags                     map[string]*string            `json:"tags,omitempty"`
+	DomainName *string `json:"domainName"`
+
+	DomainNameConfigurations []*DomainNameConfiguration `json:"domainNameConfigurations,omitempty"`
+
+	MutualTLSAuthentication *MutualTLSAuthenticationInput `json:"mutualTLSAuthentication,omitempty"`
+
+	Tags map[string]*string `json:"tags,omitempty"`
 }
 
 // DomainNameStatus defines the observed state of DomainName
@@ -39,8 +43,9 @@ type DomainNameStatus struct {
 	// contains a collection of `ackv1alpha1.Condition` objects that describe
 	// the various terminal states of the CR and its backend AWS service API
 	// resource
-	Conditions                    []*ackv1alpha1.Condition `json:"conditions"`
-	APIMappingSelectionExpression *string                  `json:"apiMappingSelectionExpression,omitempty"`
+	Conditions []*ackv1alpha1.Condition `json:"conditions"`
+
+	APIMappingSelectionExpression *string `json:"apiMappingSelectionExpression,omitempty"`
 }
 
 // DomainName is the Schema for the DomainNames API

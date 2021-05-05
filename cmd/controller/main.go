@@ -18,8 +18,8 @@ package main
 import (
 	"os"
 
-	ackcfg "github.com/aws/aws-controllers-k8s/pkg/config"
-	ackrt "github.com/aws/aws-controllers-k8s/pkg/runtime"
+	ackcfg "github.com/aws-controllers-k8s/runtime/pkg/config"
+	ackrt "github.com/aws-controllers-k8s/runtime/pkg/runtime"
 	flag "github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -28,19 +28,12 @@ import (
 
 	svctypes "github.com/aws-controllers-k8s/apigatewayv2-controller/apis/v1alpha1"
 	svcresource "github.com/aws-controllers-k8s/apigatewayv2-controller/pkg/resource"
+	ackv1alpha1 "github.com/aws-controllers-k8s/runtime/apis/core/v1alpha1"
 
-	_ "github.com/aws-controllers-k8s/apigatewayv2-controller/pkg/resource/api"
-	_ "github.com/aws-controllers-k8s/apigatewayv2-controller/pkg/resource/api_mapping"
-	_ "github.com/aws-controllers-k8s/apigatewayv2-controller/pkg/resource/authorizer"
-	_ "github.com/aws-controllers-k8s/apigatewayv2-controller/pkg/resource/deployment"
 	_ "github.com/aws-controllers-k8s/apigatewayv2-controller/pkg/resource/domain_name"
-	_ "github.com/aws-controllers-k8s/apigatewayv2-controller/pkg/resource/integration"
-	_ "github.com/aws-controllers-k8s/apigatewayv2-controller/pkg/resource/integration_response"
-	_ "github.com/aws-controllers-k8s/apigatewayv2-controller/pkg/resource/model"
 	_ "github.com/aws-controllers-k8s/apigatewayv2-controller/pkg/resource/route"
 	_ "github.com/aws-controllers-k8s/apigatewayv2-controller/pkg/resource/route_response"
 	_ "github.com/aws-controllers-k8s/apigatewayv2-controller/pkg/resource/stage"
-	_ "github.com/aws-controllers-k8s/apigatewayv2-controller/pkg/resource/vpc_link"
 )
 
 var (
@@ -53,6 +46,7 @@ var (
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = svctypes.AddToScheme(scheme)
+	_ = ackv1alpha1.AddToScheme(scheme)
 }
 
 func main() {
@@ -92,6 +86,7 @@ func main() {
 	)
 	sc := ackrt.NewServiceController(
 		awsServiceAlias, awsServiceAPIGroup,
+		ackrt.VersionInfo{}, // TODO: populate version info
 	).WithLogger(
 		ctrlrt.Log,
 	).WithResourceManagerFactories(
